@@ -1,6 +1,12 @@
 let tooltipHost = null;
 let shadowRoot = null;
 
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 function createTooltip() {
   if (tooltipHost) return;
   tooltipHost = document.createElement('div');
@@ -27,22 +33,33 @@ function createTooltip() {
     }
     .text-original { font-weight: bold; }
     .text-translation { margin-top: 4px; }
-    .btn-save {
-      background: #4caf50;
-      color: white;
+    .text-to-translate { font-weight: bold; opacity: 0.9; }
+    .error-msg {
+      color: #ff9800;
+      font-size: 12px;
+    }
+    .btn-translate, .btn-save {
       border: none;
       padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
       align-self: flex-end;
+      font-size: 13px;
+    }
+    .btn-translate {
+      background: #2196F3;
+      color: white;
+    }
+    .btn-translate:hover {
+      background: #1976D2;
+    }
+    .btn-save {
+      background: #4caf50;
+      color: white;
     }
     .btn-save:disabled {
       background: #888;
       cursor: not-allowed;
-    }
-    .error-msg {
-      color: #ff9800;
-      font-size: 12px;
     }
   `;
   shadowRoot.appendChild(style);
@@ -62,40 +79,11 @@ function removeTooltip() {
   }
 }
 
-document.addEventListener('mouseup', async (e) => {
-  const selection = window.getSelection();
-  const text = selection.toString().trim();
+/* Dịch văn bản đang lưu trong container (khi bấm nút "Dịch") và hiển thị kết quả. */
+function translateFromContainer(container) {
+  const text = container.dataset.text || '';
+  if (!text) return;
 
-  if (!text) {
-    if (tooltipHost && !e.composedPath().includes(tooltipHost)) {
-      removeTooltip();
-    }
-    return;
-  }
-
-  const isVietnamese = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(text);
-  if (isVietnamese) {
-    removeTooltip();
-    return;
-  }
-
-  // Check if extension is enabled
-  let isEnabled = true;
-  try {
-    const { settings } = await chrome.storage.local.get('settings');
-    if (settings && settings.isEnabled === false) isEnabled = false;
-  } catch (err) {}
-  if (!isEnabled) return;
-
-  createTooltip();
-
-  const range = selection.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-  
-  tooltipHost.style.top = `${window.scrollY + rect.bottom + 5}px`;
-  tooltipHost.style.left = `${window.scrollX + rect.left}px`;
-
-  const container = shadowRoot.querySelector('.tooltip-container');
   container.innerHTML = `<div>Đang dịch...</div>`;
 
   const words = text.split(/\s+/).length;
@@ -109,8 +97,8 @@ document.addEventListener('mouseup', async (e) => {
 
     const translation = response.translation;
     container.innerHTML = `
-      <div class="text-original">${text}</div>
-      <div class="text-translation">${translation}</div>
+      <div class="text-original">${escapeHtml(text)}</div>
+      <div class="text-translation">${escapeHtml(translation)}</div>
       ${!isValid ? `<div class="error-msg">Đoạn văn quá dài để lưu.</div>` : ''}
       <button class="btn-save" ${!isValid ? 'disabled' : ''}>Lưu từ vựng</button>
     `;
@@ -133,6 +121,53 @@ document.addEventListener('mouseup', async (e) => {
         });
       });
     }
+  });
+}
+
+document.addEventListener('mouseup', async (e) => {
+  // Nếu mouseup xảy ra bên trong tooltip (ví dụ: click nút Dịch),
+  // không được ghi đè nội dung tooltip để tránh hủy event listener.
+  if (tooltipHost && e.composedPath().includes(tooltipHost)) {
+    return;
+  }
+
+  const selection = window.getSelection();
+  const text = selection.toString().trim();
+
+  if (!text) {
+    removeTooltip();
+    return;
+  }
+
+  const isVietnamese = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(text);
+  if (isVietnamese) {
+    removeTooltip();
+    return;
+  }
+
+  // Kiểm tra extension có đang bật không
+  let isEnabled = true;
+  try {
+    const { settings } = await chrome.storage.local.get('settings');
+    if (settings && settings.isEnabled === false) isEnabled = false;
+  } catch (err) {}
+  if (!isEnabled) return;
+
+  createTooltip();
+
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+
+  tooltipHost.style.top = `${window.scrollY + rect.bottom + 5}px`;
+  tooltipHost.style.left = `${window.scrollX + rect.left}px`;
+
+  const container = shadowRoot.querySelector('.tooltip-container');
+  container.dataset.text = text;
+  // Chỉ hiển thị nút "Dịch"
+  container.innerHTML = `<button class="btn-translate">Dịch</button>`;
+
+  container.querySelector('.btn-translate').addEventListener('click', () => {
+    translateFromContainer(container);
   });
 });
 
