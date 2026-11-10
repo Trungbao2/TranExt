@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Vocabulary Translator",
+  "version": "1.0",
+  "description": "Translate and save vocabulary",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_title": "Vocabulary Translator"
+  }
+}

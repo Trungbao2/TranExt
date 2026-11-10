@@ -1,0 +1,22 @@
+# Thư mục khác trong workspace (không thuộc extension)
+VIE.BE/
+vie/
+.specify/
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build output (nếu sau này có build step)
+dist/
+dist-ssr/

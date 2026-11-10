@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Từ vựng</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <h2>Quản lý từ vựng</h2>
+  </div>
+  
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="list">Danh sách</button>
+    <button class="tab-btn" data-tab="settings">Cài đặt</button>
+  </div>
+
+  <div id="tab-list" class="tab-content active">
+    <div id="vocab-list"></div>
+  </div>
+
+  <div id="tab-settings" class="tab-content">
+    <label>
+      <input type="checkbox" id="enable-ext"> Bật Extension
+    </label>
+    <label style="margin-top: 10px; display: block;">
+      Ngôn ngữ đích:
+      <select id="target-lang">
+        <option value="vi">Tiếng Việt</option>
+        <option value="en">Tiếng Anh</option>
+        <option value="fr">Tiếng Pháp</option>
+      </select>
+    </label>
+  </div>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>
